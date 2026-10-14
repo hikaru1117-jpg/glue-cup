@@ -110,6 +110,9 @@ section.alt{background:var(--tint)}
 .match dt{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;color:var(--ice-deep);padding-top:3px}
 .match dd{margin:0;font-weight:700;min-width:0}
 .match dd span{display:block;font-weight:400;color:var(--muted);font-size:14px}
+.match dd .map{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:700;color:var(--ice-deep);text-decoration:none;border:1.5px solid var(--line);border-radius:999px;padding:5px 14px 5px 10px;transition:background .15s}
+.match dd .map:hover{background:var(--tint)}
+.match dd .map svg{width:16px;height:16px;flex:none}
 .note{font-size:13px;color:var(--muted);margin-top:14px}
 @media (max-width:820px){.match{grid-template-columns:1fr}.match dl{padding:8px 22px}.match .date{padding:26px 22px}.match dl div{grid-template-columns:84px 1fr}}
 
@@ -253,7 +256,7 @@ footer p{color:var(--muted);font-size:13px;margin:8px 0 0}
           <div class="big">12.05<small>2026 · SAT</small></div>
         </div>
         <dl>
-          <div><dt>VENUE</dt><dd>【会場名】<span>鳥取市【住所】</span></dd></div>
+          <div><dt>VENUE</dt><dd>鳥取市民体育館 エネトピアアリーナ<br>フットサル場<span>〒680-0864 鳥取県鳥取市吉成3-1-1 / 駐車場無料</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=%E9%B3%A5%E5%8F%96%E5%B8%82%E6%B0%91%E4%BD%93%E8%82%B2%E9%A4%A8%20%E3%82%A8%E3%83%8D%E3%83%88%E3%83%94%E3%82%A2%E3%82%A2%E3%83%AA%E3%83%BC%E3%83%8A" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Google マップで見る</a></dd></div>
           <div><dt>TIME</dt><dd>10:00 開場・受付開始 / 11:00 キックオフ<span>16:00 頃 終了予定</span></dd></div>
           <div><dt>FEE</dt><dd>1チーム ¥6,000<span>当日現金でお支払いください</span></dd></div>
           <div><dt>CAPACITY</dt><dd>8〜10チーム<span>先着順</span></dd></div>
