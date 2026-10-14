@@ -126,7 +126,18 @@ section.alt{background:var(--tint)}
 @media (max-width:760px){.steps{grid-template-columns:1fr}}
 
 /* champions: Instagram post embeds */
-.posts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.carousel{position:relative}
+.posts{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.posts::-webkit-scrollbar{display:none}
+.posts>*{flex:0 0 min(360px,84%);scroll-snap-align:start}
+.car-ctrl{display:flex;align-items:center;gap:14px;margin-top:20px}
+.car-ctrl button{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:background .15s,color .15s,opacity .15s}
+.car-ctrl button:hover{background:var(--ink);color:#fff}
+.car-ctrl button:disabled{opacity:.3;cursor:default;background:var(--bg);color:var(--ink)}
+.car-ctrl button svg{width:20px;height:20px}
+.car-bar{flex:1;height:3px;background:var(--rule);border-radius:2px;overflow:hidden}
+.car-bar i{display:block;height:100%;background:var(--ice);width:0;transition:width .3s}
+.car-count{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:4.5em;text-align:right}
 .post{background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;min-width:0;text-decoration:none;transition:box-shadow .2s,transform .2s}
 .post:hover{box-shadow:0 12px 32px rgba(11,34,56,.1);transform:translateY(-3px)}
 .post header{display:flex;align-items:center;gap:10px;padding:12px 14px}
@@ -146,8 +157,6 @@ section.alt{background:var(--tint)}
 .embed-label span{font-family:var(--f-display);font-weight:900;font-size:30px;line-height:1;color:var(--ice-deep)}
 .post-embed .instagram-media{margin:0!important;min-width:0!important;width:100%!important;max-width:540px!important;border-radius:8px!important}
 .post-embed>blockquote{background:var(--tint);border:1px solid var(--rule);padding:24px;text-align:center}
-@media (max-width:900px){.posts{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:560px){.posts{grid-template-columns:1fr}}
 
 /* instagram */
 .ig{display:grid;grid-template-columns:1fr 1.2fr;gap:56px;align-items:center}
@@ -299,9 +308,17 @@ footer p{color:var(--muted);font-size:13px;margin:8px 0 0}
     <div class="wrap">
       <div class="head">
         <div><div class="eyebrow">Hall of Champions</div><h2>歴代優勝</h2></div>
-        <p>コートに名前を刻んだチームたち。優勝チームの紹介は Instagram の投稿でどうぞ。</p>
+        <p>コートに名前を刻んだチームたち。横にスワイプして、歴代のチャンピオンをチェック。</p>
       </div>
-      <div class="posts" id="posts"></div>
+      <div class="carousel" id="carousel">
+        <div class="posts" id="posts" tabindex="0" aria-label="歴代優勝チーム(横にスクロール)"></div>
+        <div class="car-ctrl">
+          <button type="button" id="car-prev" aria-label="前へ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <button type="button" id="car-next" aria-label="次へ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>
+          <div class="car-bar"><i id="car-bar"></i></div>
+          <div class="car-count" id="car-count"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -407,6 +424,43 @@ footer p{color:var(--muted);font-size:13px;margin:8px 0 0}
   });
   if(anyEmbed){var s=document.createElement('script');s.async=true;s.src='https://www.instagram.com/embed.js';document.body.appendChild(s);}
 
+  // Champions carousel: arrows, progress, gentle auto-advance.
+  (function(){
+    var track=posts, prev=document.getElementById('car-prev'), next=document.getElementById('car-next');
+    var barI=document.getElementById('car-bar'), count=document.getElementById('car-count');
+    var items=track.children, n=items.length;
+    function step(){return items.length>1?items[1].offsetLeft-items[0].offsetLeft:track.clientWidth;}
+    function idx(){return Math.round(track.scrollLeft/step());}
+    function maxScroll(){return track.scrollWidth-track.clientWidth;}
+    function update(){
+      var m=maxScroll(), i=idx(), visible=Math.max(1,Math.round(track.clientWidth/step()));
+      prev.disabled=track.scrollLeft<=2; next.disabled=track.scrollLeft>=m-2;
+      barI.style.width=(m>0?Math.min(1,(track.scrollLeft+track.clientWidth)/track.scrollWidth):1)*100+'%';
+      count.textContent=String(Math.min(n,i+visible)).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+      document.getElementById('carousel').querySelector('.car-ctrl').hidden=m<=2;
+    }
+    function go(d){track.scrollBy({left:d*step(),behavior:'smooth'});}
+    prev.addEventListener('click',function(){go(-1);pause();});
+    next.addEventListener('click',function(){go(1);pause();});
+    track.addEventListener('scroll',update,{passive:true});
+    window.addEventListener('resize',update);
+    track.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){go(1);pause();e.preventDefault();}if(e.key==='ArrowLeft'){go(-1);pause();e.preventDefault();}});
+    update();setTimeout(update,1500);setTimeout(update,4000);
+
+    var reduceM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var hold=0, hover=false, onScreen=false;
+    function pause(){hold=Date.now()+8000;}
+    track.addEventListener('pointerenter',function(){hover=true;});
+    track.addEventListener('pointerleave',function(){hover=false;});
+    track.addEventListener('pointerdown',pause);track.addEventListener('touchstart',pause,{passive:true});track.addEventListener('wheel',pause,{passive:true});
+    window.addEventListener('blur',pause);
+    if('IntersectionObserver' in window){new IntersectionObserver(function(es){onScreen=es[0].isIntersecting;},{threshold:.4}).observe(track);}
+    if(!reduceM){setInterval(function(){
+      if(!onScreen||hover||Date.now()<hold||document.hidden||maxScroll()<=2) return;
+      if(track.scrollLeft>=maxScroll()-2) track.scrollTo({left:0,behavior:'smooth'}); else go(1);
+    },4000);}
+  })();
+
   // Scroll progress bar.
   var bar=document.getElementById('progress');
   function prog(){var h=document.documentElement;var max=h.scrollHeight-h.clientHeight;bar.style.transform='scaleX('+(max>0?h.scrollTop/max:0)+')';}
@@ -420,7 +474,7 @@ footer p{color:var(--muted);font-size:13px;margin:8px 0 0}
     document.querySelectorAll(sel).forEach(function(el,i){el.classList.add('rv');if(stagger)el.style.setProperty('--d',(i%stagger)*0.1+'s');targets.push(el);});
   }
   mark('.head');mark('.match');mark('.entry-cta');mark('.recruit');
-  mark('.steps li',3);mark('#posts > *',3);mark('.logos > div',4);
+  mark('.steps li',3);mark('#carousel');mark('.logos > div',4);
   var vh=window.innerHeight;
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -10% 0px',threshold:0.12});
   targets.forEach(function(el){
